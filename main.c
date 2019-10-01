@@ -5,17 +5,17 @@ int *memory;
 void memory_init(void *ptr, unsigned int size){
     memset(ptr,0,size);
     memory=(void*)ptr;
-    *memory = size/4;   //size of array in integers == INTCOUNT 100
-    *(memory+1)=2*sizeof(int);  //"pointer" to the first free block == 8
+    *memory = INTCOUNT;   //size of array in integers == INTCOUNT 100
+    *(memory+1)=2;  //"pointer" to the first free block == 8
     *(memory+2)=(size/sizeof(int)) - 3*sizeof(int); //size of first free block in integers == 88
     *(memory+3)=0;  //"pointer" to next free block. At the start it is zero, because there is only one free block == 0
 }
 void *memory_alloc(unsigned int size){
-    int *curr = memory;//+*(memory+1)/sizeof(int);
+    int *curr = (void*)memory;//+*(memory+1)/sizeof(int);
     int *prev, *result;
-    printf("Curr at the start of search: %d\n",*curr);
-    printf("curr %d memory+INTCOUNT %d\n",curr,(memory+INTCOUNT*sizeof(int)));
-    while(curr<(memory+INTCOUNT*sizeof(int)) && ((*curr)<0 || (*curr)<size)){
+    curr++;
+    printf("curr %d memory+INTCOUNT %d\n",*curr,*(memory+99));
+    while(curr<(memory+INTCOUNT-1) && ((*curr)<=0 || (*curr)<size/sizeof(int))){
         prev=curr;
         curr += (*curr);
         printf("One block checked\n");
@@ -46,9 +46,17 @@ int main(){
     return 0;
     }
     */
+
     int region[INTCOUNT];
     memory_init(region,INTCOUNT*sizeof(int));
-    printf("%d %d %d %d\n",region[0],region[1],region[2],region[3]);
-    int *pointer1=(int*)memory_alloc(8);
+    printf("%d %d %d %d %d\n",region[0],region[1],region[2],region[3], region[INTCOUNT-1]);
+    region[INTCOUNT-1] = -1;    //end of array
+    int *pointer1=(int*)memory_alloc(12);    //allocating space for two integers == 8 Bytes
     return 0;
 }
+
+/*int array[5] = {1,2,3,4,5};
+    int *pointer = &array[0];
+    printf("pointer points at the first element of array == %d\n", *pointer);
+    pointer += sizeof(int)/4;
+    printf("pointer points at the second element of array == %d\n", *pointer);*/

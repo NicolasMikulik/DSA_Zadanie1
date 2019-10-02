@@ -1,41 +1,65 @@
 #include<stdio.h>
 #include <string.h>
-#define BYTECOUNT 100
-char *memory;
+#define BYTECOUNT 1000
 
 typedef struct block{
     int size;
     struct block *next;
 };
+struct block *head;
+#define BLOCKSIZE sizeof(struct block)
 
 void memory_init(void *ptr, unsigned int size){
-    memory=(void*)ptr;
-    *memory = BYTECOUNT;   //size of array in integers == BYTECOUNT 100
-    *(memory+1)='h';  //"pointer" to the first free block == 8
-    *(memory+2)=(size/sizeof(int)) - 3*sizeof(int); //size of first free block in integers == 88
-    *(memory+3)=0;  //"pointer" to next free block. At the start it is zero, because there is only one free block == 0
+    head=(void*)ptr;
+    head->size = size - BLOCKSIZE;
+    head->next = NULL;
 }
-
+void *split(struct block *current, struct block *prior, unsigned int size){
+    struct block *new = (current+size+BLOCKSIZE);
+    new->size=current->size - size - BLOCKSIZE;
+    new->next=current->next;
+    prior->next=new;
+    current->size=size;
+    current->next=NULL;
+    return (void*)current;
+}
 void *memory_alloc(unsigned int size){
-    int *curr = (void*)memory;//+*(memory+1)/sizeof(int);
-    int *prev, *result;
-    curr++;
+    struct block *curr, *prior;
+    void *result;
+    curr = head;
 
-    printf("Curr found a suitable block of size: %d\n",*curr);
+    while(curr->next!=NULL && (curr->size)<size){
+        prior = curr;
+        curr = curr->next;
+    }
+    if(curr->size == size){
+        printf("Block of exact size found\n");
+        prior->next = curr->next;
+        curr->next=NULL;
+        result = (void *)curr;
+        return result;
+    }
+    if((curr->size)<size){
+        printf("Smaller block found, performing split...\n");
+        result = split(curr,prior,size);
+        return result;
+    }
+    printf("Curr found a suitable block of size: %d\n",curr->size);
 }
-
+int memory_free(void *valid_ptr){
+    struct block *curr, *prior;
+    prior = head;
+    curr=valid_ptr;
+    while(prior->next!=NULL && (prior < curr))
+        prior = prior->next;
+    curr->next=prior->next;
+    prior->next=curr;
+}
 int main(){
 
     char region[BYTECOUNT];
     memory_init(region,BYTECOUNT*sizeof(char));
-    int testchar = 254;
-    printf("%d %c %c %c %c %c\n",region[0],region[1],region[2],region[3], region[BYTECOUNT-1],testchar);
-    testchar -= 154;
-    printf("%c %d\n",testchar,(int)testchar);
-    testchar += 27;
-    printf("%c %d %lujd\n",testchar,(int)testchar,sizeof(char));
-    region[BYTECOUNT-1] = -1;    //end of array
-    int *pointer1=(int*)memory_alloc(12);    //allocating space for two integers == 8 Bytes
+    char *pointer1=(char*)memory_alloc(984);
     printf("%ld\n", sizeof(struct block));
     return 0;
 }

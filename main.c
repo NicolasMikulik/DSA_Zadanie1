@@ -9,10 +9,11 @@ typedef struct block{
 struct block *head;
 #define BLOCKSIZE sizeof(struct block)
 
-void memory_init(void *ptr, unsigned int size){
-    head=(void*)ptr;
-    head->size = size;
-    head->next = NULL;
+void memory_init(void *ptr, unsigned int size){ //Attempt without struct
+    *(int*)(ptr) = size;
+    *(int**)(ptr+4) = (ptr+12);
+    //head->size = size;
+    //head->next = NULL;
 }
 int memory_check(void *ptr){
     struct block *curr = head, *prior;
@@ -92,10 +93,11 @@ int main(){
     *(char**)(region + 5) = &region[20];
 //    region[5] = 999;
 
-    printf("Cislo: %d == %d\n\n\n\n\n", &region[20],*(*(char**)(region + 5)));
-
+    //printf("Cislo: %d == %d\n\n\n\n\n", &region[20],*(*(char**)(region + 5)));
+    region[12] = 'B';
     memory_init(region,BYTECOUNT*sizeof(char));
-    char *pointer1=(char*)memory_alloc(988);
-    printf("%ld\n", sizeof(struct block));
+
+    printf("Region[0] %d Region[4] points to the first free block %c", *(int*)(region),*(*(char**)(region+4)));
+    // char *pointer1=(char*)memory_alloc(988);
     return 0;
 }

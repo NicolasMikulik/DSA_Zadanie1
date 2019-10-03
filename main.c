@@ -10,8 +10,12 @@ struct block *head;
 #define BLOCKSIZE sizeof(struct block)
 
 void memory_init(void *ptr, unsigned int size){ //Attempt without struct
-    *(int*)(ptr) = size;
-    *(int**)(ptr+4) = (ptr+12);
+    *(int*)(ptr) = size-sizeof(int) /*head of array*/ - sizeof(int) /*footer of array*/; //the first four elements contain size of input array
+    *(int**)(ptr+4) = (ptr+12);                                                         //pointer to the first free
+    *(int*)(ptr + *(int*)(ptr) + sizeof(int)) = *(int*)(ptr);                            //writing the size of input array into array footer
+
+
+
     //head->size = size;
     //head->next = NULL;
 }
@@ -94,10 +98,10 @@ int main(){
 //    region[5] = 999;
 
     //printf("Cislo: %d == %d\n\n\n\n\n", &region[20],*(*(char**)(region + 5)));
-    region[12] = 'B';
-    memory_init(region,BYTECOUNT*sizeof(char));
 
-    printf("Region[0] %d Region[4] points to the first free block %c", *(int*)(region),*(*(char**)(region+4)));
+    memory_init(region,BYTECOUNT*sizeof(char));
+    region[12] = 'B';
+    printf("Region[0] %d\nRegion[996] %d\nRegion[4] points to the first free block %c", *(int*)(region),*(int*)(region+BYTECOUNT-sizeof(int)),*(*(char**)(region+4)));
     // char *pointer1=(char*)memory_alloc(988);
     return 0;
 }

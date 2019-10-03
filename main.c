@@ -48,33 +48,7 @@ void *split(struct block *current, struct block *prior, unsigned int size){
     return (void*)current;
 }
 void *memory_alloc(unsigned int size){
-    struct block *curr, *prior;
-    void *result;
-    int flag = 0;
-    curr = head;
-
-    while(curr->next!=NULL && (curr->size)<size){
-        prior = curr;
-        curr = curr->next;
-    }
-    if(curr->size == size){
-        flag = 1;
-        printf("Block of exact size found\n");
-        prior->next = curr->next;
-        curr->next=NULL;
-        result = (void *)curr;
-        return result;
-    }
-    if((curr->size)>size){
-        flag = 1;
-        printf("Larger block found, performing split...\n");
-        result = split(curr,prior,size);
-        return result;
-    }
-    if(!flag){
-        printf("No sufficient memory found.\n");
-        return NULL;
-    }
+    char *pointer = *(char**)(allpointer+ sizeof(int));
 }
 int memory_free(void *valid_ptr){
     struct block *curr, *prior;
@@ -103,6 +77,7 @@ int main(){
 
     printf("Region[0] %d\nRegion[996] %d\n", *(int*)(region),*(int*)(region+BYTECOUNT-sizeof(int)));
     printf("\nSize of first free block %d",*(int*)(allpointer+BYTECOUNT-2*sizeof(int)));
-
+    char *pointer = *(char**)(allpointer+ sizeof(int));
+    printf("\nAccessing from a different pointer %d\n",*(int*)(pointer));
     return 0;
 }

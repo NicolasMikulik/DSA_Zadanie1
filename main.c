@@ -10,7 +10,7 @@ struct block *head;
 #define BLOCKSIZE sizeof(struct block)
 char *allpointer;
 void memory_init(void *ptr, unsigned int size){ //Attempt without struct
-    //char *pointer = ptr;
+    //char allpointer = ptr;
     allpointer = ptr;
     *(int*)(ptr) = size-sizeof(int) /*head of array*/ - sizeof(int) /*footer of array*/-sizeof(int*); //the first four elements contain size of input array
     *(int**)(ptr+ sizeof(int)) = (ptr + sizeof(int) + sizeof(int*));                                                         //pointer to the first free
@@ -19,7 +19,7 @@ void memory_init(void *ptr, unsigned int size){ //Attempt without struct
     *(int*)(*(int**)(ptr+ sizeof(int))) =  *(int*)(ptr) - sizeof(int) - sizeof(int);                    //size of first free
     *(int**)((*(int**)(ptr+ sizeof(int)))+sizeof(int)) = NULL;                                          //next free pointer
     *(int**)((*(int**)(ptr+ sizeof(int)))+sizeof(int)+sizeof(int*)) = ptr;                              //prior free pointer
-    *(int*)((char*)ptr+*(int*)(ptr)+sizeof(int*)) = *(int*)(*(int**)(ptr+ sizeof(int)));
+    *(int*)((char*)ptr+*(int*)(ptr)+sizeof(int*)) = *(int*)(*(int**)(ptr+ sizeof(int)));                //size of first free in footer
 }
 int memory_check(void *ptr){
     struct block *curr = head, *prior;

@@ -79,8 +79,21 @@ int memory_free(void *valid_ptr){
     prior->next=curr;
 }
 int main(){
-    //Pamar = *(aka*)ptr;
+    //Pamat = *(aka*)ptr;
     char region[BYTECOUNT];
+    region[500]=(char)2048;
+
+    for (int i = 0; i < BYTECOUNT; i++) {
+        region[i] = 'a';
+    }
+
+    region[20] = 'X';
+
+    *(char**)(region + 5) = &region[20];
+//    region[5] = 999;
+
+    printf("Cislo: %d == %d\n\n\n\n\n", &region[20],*(*(char**)(region + 5)));
+
     memory_init(region,BYTECOUNT*sizeof(char));
     char *pointer1=(char*)memory_alloc(988);
     printf("%ld\n", sizeof(struct block));

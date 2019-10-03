@@ -10,13 +10,15 @@ struct block *head;
 #define BLOCKSIZE sizeof(struct block)
 
 void memory_init(void *ptr, unsigned int size){ //Attempt without struct
+    char *pointer = ptr;
     *(int*)(ptr) = size-sizeof(int) /*head of array*/ - sizeof(int) /*footer of array*/-sizeof(int*); //the first four elements contain size of input array
     *(int**)(ptr+ sizeof(int)) = (ptr + sizeof(int) + sizeof(int*));                                                         //pointer to the first free
     *(int*)(ptr + *(int*)(ptr) + sizeof(int) +sizeof(int*)) = *(int*)(ptr);                            //writing the size of input array into array footer
 
-    *(int*)(*(int**)(ptr+ sizeof(int))) =  *(int*)(ptr) - sizeof(int) - sizeof(int);
-    *(int**)((*(int**)(ptr+ sizeof(int)))+sizeof(int)) = NULL;
-    *(int**)((*(int**)(ptr+ sizeof(int)))+sizeof(int)+sizeof(int*)) = ptr;
+    *(int*)(*(int**)(ptr+ sizeof(int))) =  *(int*)(ptr) - sizeof(int) - sizeof(int);                    //size of first free
+    *(int**)((*(int**)(ptr+ sizeof(int)))+sizeof(int)) = NULL;                                          //next free pointer
+    *(int**)((*(int**)(ptr+ sizeof(int)))+sizeof(int)+sizeof(int*)) = ptr;                              //prior free pointer
+    *(int*)(*(int**)(ptr+ sizeof(int))+sizeof(int*)+sizeof(int*)+ *(int*)(*(int**)(ptr+ sizeof(int))) ) = *(int*)(*(int**)(ptr+ sizeof(int)));
     //head->size = size;
     //head->next = NULL;
 }
@@ -87,7 +89,6 @@ int memory_free(void *valid_ptr){
 int main(){
     //Pamat = *(aka*)ptr;
     char region[BYTECOUNT];
-    region[500]=(char)2048;
 
     for (int i = 0; i < BYTECOUNT; i++) {
         region[i] = 'a';
@@ -102,7 +103,7 @@ int main(){
     memory_init(region,BYTECOUNT*sizeof(char));
 
     printf("Region[0] %d\nRegion[996] %d\nRegion[4] points to the first free block %c", *(int*)(region),*(int*)(region+BYTECOUNT-sizeof(int)),*(*(char**)(region+4)));
-    printf("\nSize of first free block %d",*(int*)(region+12));
+    printf("\nSize of first free block %d",*(int*)(region+992));
 
     return 0;
 }

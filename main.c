@@ -2,41 +2,37 @@
 #include <string.h>
 #define BYTECOUNT 1000
 
-typedef struct block{
+typedef struct freeBlock{
     unsigned int size;
-    struct block *next;
-}block;
-struct block *head;
+    struct freeBlock *next;
+    struct freeBlock *prior;
+};
+
+typedef struct occupiedBlock{
+    unsigned int size;
+};
+
+typedef struct footer{
+    unsigned int size;
+}footer;
+
+typedef struct arrayHead{
+    unsigned int size;
+    struct freeBlock *firstFree;
+}arrayHead;
+
 #define BLOCKSIZE sizeof(struct block)
 char *allpointer;
 void memory_init(void *ptr, unsigned int size){ //Attempt without struct
-    //char allpointer = ptr;
-    allpointer = ptr;
-    *(int*)(allpointer) = size-sizeof(int) /*head of array*/ - sizeof(int) /*footer of array*/-sizeof(int*); //the first four elements contain size of input array
-    *(char**)(allpointer+ sizeof(int)) = (allpointer + 2*sizeof(int) + 3*sizeof(int*));                                                         //pointer to the first free
-    *(int*)(allpointer + *(int*)(allpointer) + sizeof(int) +sizeof(int*)) = *(int*)(allpointer);                            //writing the size of input array into array footer
-    printf("%d\n",*(int*)(allpointer+996));
-
-    *(int*)(allpointer+sizeof(int)+sizeof(int*)) = *(int*)(allpointer) - 2*sizeof(int);             //first free block size
-    char *reference = allpointer+sizeof(int)+sizeof(int*);
-    *(char**)(reference+sizeof(int)) = NULL;                                                         //pointer to the next free block
-    *(char**)(reference+sizeof(int)+sizeof(int*)) = allpointer;
+    struct arrayHead *firstHead = ptr;
+    allpointer = firstHead;
+    firstHead->size = size-sizeof(struct arrayHead)-sizeof(struct footer);
+    struct footer *arrayFooter = (firstHead+size-1-sizeof(struct footer));
+    arrayFooter->size = size-sizeof(struct arrayHead)-sizeof(struct footer);
+    struct freeBlock *freeOne = (firstHead+sizeof(struct arrayHead));
+    firstHead->firstFree = freeOne;
 }
-int memory_check(void *ptr){
-    struct block *curr = head, *prior;
-    struct block *check = ptr;
-    if(check<head || check>(head+head->size)){
-        printf("Pointer invalid, out of bounds.\n");
-        return 0;
-    }
-    while(curr->next!=NULL && (curr < head+head->size)){
-        if(curr == check){
-            printf("-----ERROR-Allocated pointer found between free memory blocks!----\n");
-        }
-        prior = curr;
-        curr = curr->next;
-    }
-}
+int memory_check(void *ptr);
 void *split(char *fitting, unsigned int size){
     int oldsize = *(int*)(fitting - 2*sizeof(char*) - sizeof(int));
     char *linkOriginalRest = fitting - 2*sizeof(char*);
@@ -49,9 +45,11 @@ void *split(char *fitting, unsigned int size){
     reference += sizeof(int);                                      //move reference to size of rest block
     *(int*)(reference) = oldsize - size - 2*sizeof(int) - 2*sizeof(char*);  //write size of rest block
 
-    reference = reference + sizeof(int) + 2*sizeof(char*);
-    linkOriginalRest = *(char**)(linkOriginalRest);                    //point the next pointer of original free block to the rest block
-    *(char**)(linkOriginalRest) = reference;                                  //move reference to prior pointer
+    reference = reference + sizeof(int) + 2*sizeof(char*);         //move reference to beginning of rest block
+    linkOriginalRest = *(char**)(linkOriginalRest);                //move link pointer to next of original
+    if(linkOriginalRest != NULL){
+        *(char**)(linkOriginalRest) = reference;                                  //move reference to prior pointer
+    }
     //*(char**)(reference) = *(char**)(linkOriginalRest+sizeof(char*));              //point rest prior to previous
 }
 

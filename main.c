@@ -8,9 +8,10 @@ typedef struct block{
 }block;
 struct block *head;
 #define BLOCKSIZE sizeof(struct block)
-
+char *allpointer;
 void memory_init(void *ptr, unsigned int size){ //Attempt without struct
-    char *pointer = ptr;
+    //char *pointer = ptr;
+    allpointer = ptr;
     *(int*)(ptr) = size-sizeof(int) /*head of array*/ - sizeof(int) /*footer of array*/-sizeof(int*); //the first four elements contain size of input array
     *(int**)(ptr+ sizeof(int)) = (ptr + sizeof(int) + sizeof(int*));                                                         //pointer to the first free
     *(int*)(ptr + *(int*)(ptr) + sizeof(int) +sizeof(int*)) = *(int*)(ptr);                            //writing the size of input array into array footer
@@ -18,9 +19,7 @@ void memory_init(void *ptr, unsigned int size){ //Attempt without struct
     *(int*)(*(int**)(ptr+ sizeof(int))) =  *(int*)(ptr) - sizeof(int) - sizeof(int);                    //size of first free
     *(int**)((*(int**)(ptr+ sizeof(int)))+sizeof(int)) = NULL;                                          //next free pointer
     *(int**)((*(int**)(ptr+ sizeof(int)))+sizeof(int)+sizeof(int*)) = ptr;                              //prior free pointer
-    *(int*)(*(int**)(ptr+ sizeof(int))+sizeof(int*)+sizeof(int*)+ *(int*)(*(int**)(ptr+ sizeof(int))) ) = *(int*)(*(int**)(ptr+ sizeof(int)));
-    //head->size = size;
-    //head->next = NULL;
+    *(int*)((char*)ptr+*(int*)(ptr)+sizeof(int*)) = *(int*)(*(int**)(ptr+ sizeof(int)));
 }
 int memory_check(void *ptr){
     struct block *curr = head, *prior;
@@ -102,8 +101,8 @@ int main(){
 
     memory_init(region,BYTECOUNT*sizeof(char));
 
-    printf("Region[0] %d\nRegion[996] %d\nRegion[4] points to the first free block %c", *(int*)(region),*(int*)(region+BYTECOUNT-sizeof(int)),*(*(char**)(region+4)));
-    printf("\nSize of first free block %d",*(int*)(region+992));
+    printf("Region[0] %d\nRegion[996] %d\n", *(int*)(region),*(int*)(region+BYTECOUNT-sizeof(int)));
+    printf("\nSize of first free block %d",*(int*)(allpointer+BYTECOUNT-2*sizeof(int)));
 
     return 0;
 }

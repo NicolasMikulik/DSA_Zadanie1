@@ -24,12 +24,26 @@ void memory_init(void *ptr, unsigned int size){ //Attempt without struct
     struct Block *freeOne = (char *)(firstHead)+sizeof(struct arrayHead);
     freeOne->next=NULL;
     freeOne->prior=(struct Block *)firstHead;
-    freeOne->size=firstHead->size-sizeof(int*);
+    freeOne->size=firstHead->size-sizeof(int);
     firstHead->next = freeOne;
 }
 int memory_check(void *ptr);
-void *split(char *fitting, unsigned int size){
-
+void *split(struct Block *fitting, unsigned int size){
+    struct Block *new= (char*)((char *)fitting+BLOCKSIZE+size);
+    new->size=fitting->size-size-sizeof(int);
+    if(fitting->prior!=NULL){
+        fitting->prior->next=new;
+        new->prior=fitting->prior;
+    }
+    else {new->prior=NULL;}
+    if(fitting->next!=NULL){
+        fitting->next->prior=new;
+        new->next=fitting->next;
+    }
+    else {new->next=NULL;}
+    fitting->prior=NULL;
+    fitting->next=NULL;
+    fitting->size=size+1;
 }
 
 void *memory_alloc(unsigned int size){
@@ -50,10 +64,15 @@ void *memory_alloc(unsigned int size){
             curr->prior->next = curr->next;
         curr->next=NULL;
         curr->prior=NULL;
+        curr->size=size+1;
         flag=true;
         reference = (char*)curr;
         reference += sizeof(int);
         return (void *) reference;
+    }
+    if(curr->size > size){
+        flag=true;
+        split(curr,size);
     }
     if(!flag){
         printf("No fitting block found\n");
@@ -68,7 +87,7 @@ int main(){
     printf("Sizeof arrayHead %d Sizeof Block %d\n",sizeof(struct arrayHead),sizeof(struct Block));
     printf("given %p\n",region);
     memory_init(region,BYTECOUNT);
-    int *pointer =(int*)memory_alloc(976);
+    int *pointer =(int*)memory_alloc(980);
     char *temp = (char *)pointer;
     temp = temp - sizeof(int);
     struct Block *read = (struct Block*) temp;

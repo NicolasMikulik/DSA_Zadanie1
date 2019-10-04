@@ -68,11 +68,14 @@ void *memory_alloc(unsigned int size){
         flag=true;
         reference = (char*)curr;
         reference += sizeof(int);
-        return (void *) reference;
+        return (void *)reference;
     }
     if(curr->size > size){
-        flag=true;
         split(curr,size);
+        flag=true;
+        reference = (char*)curr;
+        reference += sizeof(int);
+        return (void *)reference;
     }
     if(!flag){
         printf("No fitting block found\n");
@@ -84,13 +87,14 @@ int memory_free(void *valid_ptr){
 int main(){
     //Pamat = *(aka*)ptr;
     char region[BYTECOUNT];
-    printf("Sizeof arrayHead %d Sizeof Block %d\n",sizeof(struct arrayHead),sizeof(struct Block));
+    printf("Sizeof arrayHead %ld Sizeof Block %ld\n",sizeof(struct arrayHead),sizeof(struct Block));
     printf("given %p\n",region);
     memory_init(region,BYTECOUNT);
-    int *pointer =(int*)memory_alloc(980);
+    int *pointer =(int*)memory_alloc(900);
     char *temp = (char *)pointer;
     temp = temp - sizeof(int);
     struct Block *read = (struct Block*) temp;
     printf("Read %d\n",((struct Block*) temp)->size);
+    printf("First free size %d\n",((struct Block*) allpointer)->next->size);
     return 0;
 }

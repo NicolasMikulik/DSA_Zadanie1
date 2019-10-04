@@ -57,13 +57,14 @@ int memory_check(void *ptr){
     }
 }
 void *split(struct Block *fitting, unsigned int size){
+    printf("Performing split from %d to %d\n",fitting->size,size);
     struct Block *new= (struct Block *)(((char *)fitting)+BLOCKSIZE+size);
     new->size=fitting->size-size-sizeof(int);
     if(fitting->prior!=NULL){
         fitting->prior->next=new;
         new->prior=fitting->prior;
     }
-    else {new->prior=NULL;}
+    else {new->prior=(struct Block*)allpointer;}
     if(fitting->next!=NULL){
         fitting->next->prior=new;
         new->next=fitting->next;
@@ -81,7 +82,7 @@ void *memory_alloc(unsigned int size){
     struct arrayHead *startHead = (struct arrayHead*)allpointer;
     struct Block *curr = startHead->next;
     if(curr == NULL){
-        printf("No fitting block found\n");
+        printf("1)No fitting block found\n");
         return NULL;
     }
     while(curr->next != NULL && curr->size < size){
@@ -102,7 +103,7 @@ void *memory_alloc(unsigned int size){
         reference += sizeof(int);
         return (void *)reference;
     }
-    if(curr->size >= size+BLOCKSIZE){
+    if(curr->size > size+BLOCKSIZE){
         split(curr,size);
         flag=true;
         reference = (char*)curr;
@@ -110,7 +111,7 @@ void *memory_alloc(unsigned int size){
         return (void *)reference;
     }
     if(!flag){
-        printf("No fitting block found\n");
+        printf("2)No fitting block found\n");
         return NULL;
     }
 }
@@ -166,7 +167,7 @@ int memory_free(void *valid_ptr){
         }
     }
     else {
-        printf("---Invalid provided pointer.\n");
+        printf("---Invalid provided pointer.---\n");
         return !successfullyFreed;
     }
 }
@@ -177,13 +178,16 @@ int main(){
     printf("given %p\n",region);
     memory_init(region,BYTECOUNT);
     printf("First free size %d\n",((struct Block*) allpointer)->next->size);
-    int *pointer =(int*)memory_alloc(982);
+    int *pointer =(int*)memory_alloc(120);
+    int *pointer1 =(int*)memory_alloc(120);
+    int *pointer2 =(int*)memory_alloc(120);
     char *temp = (char *)pointer;
     temp = temp - sizeof(int);
     struct Block *read = (struct Block*) temp;
-    if(pointer != NULL )printf("Read %d\n",((struct Block*) temp)->size);
+    if(pointer != NULL) printf("Read %d\n",((struct Block*) temp)->size);
     if(((struct Block*) allpointer)->next != NULL)printf("First free size %d\n",((struct Block*) allpointer)->next->size);
     memory_check((void*)pointer);
-    memory_free((void*)pointer);
+    memory_free((void*)pointer1);
+    int *pointer3 =(int*)memory_alloc(60);
     return 0;
 }

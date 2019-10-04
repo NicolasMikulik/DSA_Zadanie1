@@ -8,12 +8,10 @@ typedef struct Block{
     struct Block *next;
     struct Block *prior;
 };
-
 typedef struct arrayHead{
     unsigned int size;
     struct Block *next;
 };
-
 #define BLOCKSIZE sizeof(struct Block)
 char *allpointer;
 void memory_init(void *ptr, unsigned int size){ //Attempt without struct
@@ -27,7 +25,38 @@ void memory_init(void *ptr, unsigned int size){ //Attempt without struct
     freeOne->size=firstHead->size-sizeof(int);
     firstHead->next = freeOne;
 }
-int memory_check(void *ptr);
+int memory_check(void *ptr){
+    bool valid=true;
+    char* reference = (char*)ptr;
+    int sizeOfMemory = ((struct arrayHead*)allpointer)->size+sizeof(struct arrayHead)-1;
+    if(reference<allpointer || reference>(allpointer+sizeOfMemory)){
+        valid=false;
+        printf("---Invalid pointer. Pointing out of bounds of memory.---\n");
+        return 0;
+    }
+    reference -= sizeof(int);
+    if(((struct Block*)reference)->size < 0 || ((struct Block*)reference)->size > 100000){
+        valid=false;
+        printf("---Invalid pointer, invalid size written in header of block.---\n");
+        return 0;
+    }
+    struct Block *curr=((struct arrayHead*)allpointer)->next, *prior;
+    char *check;
+    while(curr->next != NULL){
+        check = (char*)curr;
+        if(check<=reference && reference<=(check+BLOCKSIZE+curr->size)){
+            valid=false;
+            printf("---Invalid pointer. Provided pointer pointing free (not allocated) memory.---\n");
+            return 0;
+        }
+        prior=curr;
+        curr = curr->next;
+    }
+    if(true==valid){
+        printf("Provided pointer is valid.\n");
+        return 1;
+    }
+}
 void *split(struct Block *fitting, unsigned int size){
     struct Block *new= (char*)((char *)fitting+BLOCKSIZE+size);
     new->size=fitting->size-size-sizeof(int);

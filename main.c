@@ -17,11 +17,11 @@ char *allpointer;
 void memory_init(void *ptr, unsigned int size){
     struct arrayHead *firstHead = ptr;
     allpointer = (char*)firstHead;
-    firstHead->size = size-sizeof(struct arrayHead);
+    firstHead->size = size-sizeof(struct arrayHead)-sizeof(int);
     struct Block *freeOne = (struct Block *)((char *) (firstHead) + sizeof(struct arrayHead));
     freeOne->next=NULL;
     freeOne->prior=(struct Block *)firstHead;
-    freeOne->size=firstHead->size-sizeof(int);
+    freeOne->size=firstHead->size;
     firstHead->next = freeOne;
 }
 int memory_check(void *ptr){
@@ -39,7 +39,7 @@ int memory_check(void *ptr){
         printf("---Invalid pointer, invalid size written in header of block.---\n");
         return 0;
     }
-    struct Block *curr=((struct arrayHead*)allpointer)->next;
+    if(((struct arrayHead*)allpointer)->next != NULL) {struct Block *curr=((struct arrayHead*)allpointer)->next;
     char *check;
     while(curr->next != NULL){
         check = (char*)curr;
@@ -49,6 +49,7 @@ int memory_check(void *ptr){
             return 0;
         }
         curr = curr->next;
+    }
     }
     if(true==valid){
         printf("Provided pointer is valid.\n");
@@ -83,7 +84,7 @@ void *memory_alloc(unsigned int size){
         printf("No fitting block found\n");
         return NULL;
     }
-    while(curr != NULL && curr->size < size){
+    while(curr->next != NULL && curr->size < size){
         printf("Curr->size %d\n",curr->size);
         curr = curr->next;
     }
@@ -176,12 +177,12 @@ int main(){
     printf("given %p\n",region);
     memory_init(region,BYTECOUNT);
     printf("First free size %d\n",((struct Block*) allpointer)->next->size);
-    int *pointer =(int*)memory_alloc(1000);
+    int *pointer =(int*)memory_alloc(982);
     char *temp = (char *)pointer;
     temp = temp - sizeof(int);
     struct Block *read = (struct Block*) temp;
-    printf("Read %d\n",((struct Block*) temp)->size);
-    printf("First free size %d\n",((struct Block*) allpointer)->next->size);
+    if(pointer != NULL )printf("Read %d\n",((struct Block*) temp)->size);
+    if(((struct Block*) allpointer)->next != NULL)printf("First free size %d\n",((struct Block*) allpointer)->next->size);
     memory_check((void*)pointer);
     memory_free((void*)pointer);
     return 0;

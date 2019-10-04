@@ -11,10 +11,10 @@ typedef struct Block{
 
 typedef struct arrayHead{
     unsigned int size;
-    struct freeBlock *next;
+    struct Block *next;
 };
 
-#define BLOCKSIZE sizeof(struct block)
+#define BLOCKSIZE sizeof(struct Block)
 char *allpointer;
 void memory_init(void *ptr, unsigned int size){ //Attempt without struct
     struct arrayHead *firstHead = ptr;
@@ -51,6 +51,7 @@ void *split(char *fitting, unsigned int size){
 void *memory_alloc(unsigned int size){
     if(size % 2 == 1) size++;
     bool flag = false;
+    char *reference;
     struct arrayHead *startHead = (struct arrayHead*)allpointer;
     struct Block *curr = startHead->next, *prior;
     while(curr->next != NULL && curr->size < size){
@@ -63,7 +64,12 @@ void *memory_alloc(unsigned int size){
             curr->next->prior=curr->prior;
         if(curr->prior != NULL)
             curr->prior->next = curr->next;
+        curr->next=NULL;
+        curr->prior=NULL;
         flag=true;
+        reference = (char*)curr;
+        reference += BLOCKSIZE;
+        return (void *) reference;
     }
     if(!flag){
         printf("No fitting block found\n");
@@ -78,6 +84,10 @@ int main(){
     printf("Sizeof arrayHead %d Sizeof Block %d\n",sizeof(struct arrayHead),sizeof(struct Block));
     printf("given %p\n",region);
     memory_init(region,BYTECOUNT);
-    int *pointer =(int*)memory_alloc(100);
+    int *pointer =(int*)memory_alloc(976);
+    char *temp = (char *)pointer;
+    temp = temp - BLOCKSIZE;
+    struct Block *read = (struct Block*) temp;
+    printf("Read %d\n",((struct Block*) temp)->size);
     return 0;
 }

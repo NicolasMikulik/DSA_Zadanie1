@@ -29,23 +29,7 @@ void memory_init(void *ptr, unsigned int size){ //Attempt without struct
 }
 int memory_check(void *ptr);
 void *split(char *fitting, unsigned int size){
-    int oldsize = *(int*)(fitting - 2*sizeof(char*) - sizeof(int));
-    char *linkOriginalRest = fitting - 2*sizeof(char*);
-    char *reference = fitting + oldsize;                    //move reference to the footer of fitting block
-    *(int*)(reference) = oldsize - size - 2*sizeof(int) - 2*sizeof(char*);  //write size of rest block in footer
 
-    reference = fitting + size;                             //move reference to the beginning of size of allocated block
-    *(int*)(reference) = size;                              //write size of allocated block
-
-    reference += sizeof(int);                                      //move reference to size of rest block
-    *(int*)(reference) = oldsize - size - 2*sizeof(int) - 2*sizeof(char*);  //write size of rest block
-
-    reference = reference + sizeof(int) + 2*sizeof(char*);         //move reference to beginning of rest block
-    linkOriginalRest = *(char**)(linkOriginalRest);                //move link pointer to next of original
-    if(linkOriginalRest != NULL){
-        *(char**)(linkOriginalRest) = reference;                                  //move reference to prior pointer
-    }
-    //*(char**)(reference) = *(char**)(linkOriginalRest+sizeof(char*));              //point rest prior to previous
 }
 
 void *memory_alloc(unsigned int size){
@@ -58,7 +42,7 @@ void *memory_alloc(unsigned int size){
         prior=curr;
         curr = curr->next;
     }
-    if(curr->size >= size){
+    if(curr->size == size){
         printf("Size %d B found\n",curr->size);
         if(curr->next != NULL)
             curr->next->prior=curr->prior;
@@ -68,7 +52,7 @@ void *memory_alloc(unsigned int size){
         curr->prior=NULL;
         flag=true;
         reference = (char*)curr;
-        reference += BLOCKSIZE;
+        reference += sizeof(int);
         return (void *) reference;
     }
     if(!flag){
@@ -86,7 +70,7 @@ int main(){
     memory_init(region,BYTECOUNT);
     int *pointer =(int*)memory_alloc(976);
     char *temp = (char *)pointer;
-    temp = temp - BLOCKSIZE;
+    temp = temp - sizeof(int);
     struct Block *read = (struct Block*) temp;
     printf("Read %d\n",((struct Block*) temp)->size);
     return 0;

@@ -14,10 +14,9 @@ typedef struct arrayHead{
 };
 #define BLOCKSIZE sizeof(struct Block)
 char *allpointer;
-void memory_init(void *ptr, unsigned int size){ //Attempt without struct
+void memory_init(void *ptr, unsigned int size){
     struct arrayHead *firstHead = ptr;
     allpointer = (char*)firstHead;
-
     firstHead->size = size-sizeof(struct arrayHead);
     struct Block *freeOne = (char *)(firstHead)+sizeof(struct arrayHead);
     freeOne->next=NULL;
@@ -80,7 +79,7 @@ void *memory_alloc(unsigned int size){
     bool flag = false;
     char *reference;
     struct arrayHead *startHead = (struct arrayHead*)allpointer;
-    struct Block *curr = startHead->next, *prior;
+    struct Block *curr = startHead->next, *prior, *backup;
     while(curr->next != NULL && curr->size < size){
         prior=curr;
         curr = curr->next;
@@ -99,7 +98,7 @@ void *memory_alloc(unsigned int size){
         reference += sizeof(int);
         return (void *)reference;
     }
-    if(curr->size > size){
+    if(curr->size >= size+BLOCKSIZE){
         split(curr,size);
         flag=true;
         reference = (char*)curr;
@@ -125,5 +124,6 @@ int main(){
     struct Block *read = (struct Block*) temp;
     printf("Read %d\n",((struct Block*) temp)->size);
     printf("First free size %d\n",((struct Block*) allpointer)->next->size);
+    memory_check((void*)pointer);
     return 0;
 }

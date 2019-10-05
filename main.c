@@ -91,24 +91,21 @@ void *memory_alloc(unsigned int size) {
         if(((char*)curr)+sizeof(int)+curr->size == ((char*)curr->next)){
             if(curr->size%2==0 && curr->next->size%2==0){
                 curr->size+=sizeof(int)+curr->next->size;
-            if(curr->next->next!=NULL){
-                curr->next->next->prior=curr;
-                curr->next=curr->next->next;
-            }
-            printf("New merged size %d\n",curr->size);}
+                if(curr->next->next!=NULL){
+                    curr->next->next->prior=curr;
+                    curr->next=curr->next->next;
+                }
+                printf("New merged size %d\n",curr->size);}
         }
         if(curr->next == NULL) traversed=true;
         if(curr!=NULL && curr->next!=NULL && ((char*)curr+sizeof(int)+curr->size==(char*)curr->next))
-            {continue;}
+        {continue;}
         else {curr=curr->next;}
     }
     traversed=false;
     curr=startHead->next;
     while(!traversed){
-        if(curr==NULL || curr->next == NULL) {
-            traversed=true;
-            continue;
-        }
+
         while (curr->next != NULL && curr->size < size) {
             printf("Curr->size %d\n", curr->size);
             curr = curr->next;
@@ -140,7 +137,7 @@ void *memory_alloc(unsigned int size) {
             return (void *) reference;
         }else {
             if((curr->size < size + BLOCKSIZE) && (size < ((struct arrayHead*)allpointer)->size)){
-                printf("Bigger block found, insufficient for a split, returning full block.\n");
+                printf("Bigger block found, insufficient for a split, returning full block of size %d.\n",curr->size);
                 if (curr->next != NULL)
                     curr->next->prior = curr->prior;      //connect next free block with the previous one
                 if (curr->prior != NULL){
@@ -157,6 +154,10 @@ void *memory_alloc(unsigned int size) {
                 reference += sizeof(int);
                 return (void *) reference;
             }
+        }
+        if(curr==NULL || curr->next == NULL) {
+            traversed=true;
+            continue;
         }
     }
     if(!flag){
@@ -237,20 +238,10 @@ int main(){
     int *pointer =(int*)memory_alloc(120);
     int *pointer1 =(int*)memory_alloc(120);
     int *pointer2 =(int*)memory_alloc(120);
-    int *pointer3 =(int*)memory_alloc(608);
-    char *temp = (char *)pointer;
-    temp = temp - sizeof(int);
-    struct Block *read = (struct Block*) temp;
-    if(pointer != NULL) printf("Read occupied %d\n",((struct Block*) temp)->size);
-    if(((struct Block*) allpointer)->next != NULL)printf("First free size %d\n",((struct Block*) allpointer)->next->size);
-    else printf("Out of memory\n");
-    memory_check((void*)((struct Block*) allpointer)->next);
-    memory_free((void*)pointer);
-    memory_check((void*)((struct Block*) allpointer)->next); //this should be invalid
-    if(((struct Block*) allpointer)->next != NULL)printf("First free size %d\n",((struct Block*) allpointer)->next->size);
-    memory_check((void*)pointer2);
-    memory_free((void*)pointer2);
-    memory_free((void*)pointer3);
+    int *pointer3 =(int*)memory_alloc(600);
+    memory_free(pointer);
+    memory_check(pointer3);
+    memory_free(pointer2);
     checkFree();
     return 0;
 }

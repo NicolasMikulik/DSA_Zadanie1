@@ -27,29 +27,30 @@ void memory_init(void *ptr, unsigned int size){
 int memory_check(void *ptr){
     bool valid=true;
     char* reference = (char*)ptr;
-    int sizeOfMemory = ((struct arrayHead*)allpointer)->size+sizeof(struct arrayHead)-1;
-    if(reference<allpointer || reference>(allpointer+sizeOfMemory)){
+    int sizeOfMemory = ((struct arrayHead*)allpointer)->size+sizeof(struct arrayHead)-1+sizeof(int);
+    if(ptr == NULL || reference<allpointer || reference>(allpointer+sizeOfMemory)){
         valid=false;
         printf("---Invalid pointer. Pointing out of bounds of memory.---\n");
         return 0;
     }
-    reference -= sizeof(int);
-    if(((struct Block*)reference)->size < 0 || ((struct Block*)reference)->size > 100000){
+    //reference -= sizeof(int);
+    if(((struct Block*)(reference-sizeof(int)))->size < 0 || (((struct Block*)(reference-sizeof(int)))->size > 100000)){
         valid=false;
         printf("---Invalid pointer, invalid size written in header of block.---\n");
         return 0;
     }
-    if(((struct arrayHead*)allpointer)->next != NULL) {struct Block *curr=((struct arrayHead*)allpointer)->next;
-    char *check;
-    while(curr->next != NULL){
-        check = (char*)curr;
-        if(check<=reference && reference<=(check+BLOCKSIZE+curr->size)){
-            valid=false;
-            printf("---Invalid pointer. Provided pointer pointing free (not allocated) memory.---\n");
-            return 0;
+    if(((struct arrayHead*)allpointer)->next != NULL) {
+        struct Block *curr=((struct arrayHead*)allpointer)->next;
+        struct Block *check;
+        while(curr != NULL && curr->next != NULL){
+            check = (struct Block*)reference;
+            if(check==curr){
+                valid=false;
+                printf("---Invalid pointer. Provided pointer pointing free (not allocated) memory.---\n");
+                return 0;
+            }
+            curr = curr->next;
         }
-        curr = curr->next;
-    }
     }
     if(true==valid){
         printf("Provided pointer is valid.\n");
@@ -86,8 +87,28 @@ void *memory_alloc(unsigned int size) {
         printf("1)No fitting block found\n");
         return NULL;
     }
-    while(!traversed){
+    while(curr->next != NULL && curr->size < size){
+        if(((char*)curr)+sizeof(int)+curr->size == ((char*)curr->next)){
+            if(curr->size%2==0 && curr->next->size%2==0){
+                curr->size+=sizeof(int)+curr->next->size;
+            if(curr->next->next!=NULL){
+                curr->next->next->prior=curr;
+                curr->next=curr->next->next;
+            }
+            printf("New merged size %d\n",curr->size);}
+        }
         if(curr->next == NULL) traversed=true;
+        if(curr!=NULL && curr->next!=NULL && ((char*)curr+sizeof(int)+curr->size==(char*)curr->next))
+            {continue;}
+        else {curr=curr->next;}
+    }
+    traversed=false;
+    curr=startHead->next;
+    while(!traversed){
+        if(curr==NULL || curr->next == NULL) {
+            traversed=true;
+            continue;
+        }
         while (curr->next != NULL && curr->size < size) {
             printf("Curr->size %d\n", curr->size);
             curr = curr->next;
@@ -150,47 +171,49 @@ int memory_free(void *valid_ptr){
     char *reference=(char *)valid_ptr;
     reference-= sizeof(int);
     struct Block *freed= (struct Block *)reference;
-    if(curr == NULL){
-        freed->size--; //set size even
-        printf("Freed size %d\n",freed->size);
-        startHead->next=freed;
-        freed->next=NULL;
-        freed->prior= (struct Block *) startHead;
-        printf("Freed, occupied became first free. Memory was full.\n");
-        return 0;
-    }
-    if((char*)curr > reference){
-        freed->size--; //set size even
-        printf("Freed size %d\n",freed->size);
-        curr->prior=freed;
-        startHead->next=freed;
-        freed->next=curr;
-        freed->prior= (struct Block *) startHead;
-        printf("Freed, occupied became first free.\n");
-        return 0;
-    }
-    if((char*)curr < reference){
-        while(curr->next != NULL && (char*)curr->next < reference){
-            curr=curr->next;
-        }
-        if(curr->next == NULL && ((char*)curr < reference)){
+    if(memory_check(valid_ptr)){
+        if(curr == NULL){
             freed->size--; //set size even
             printf("Freed size %d\n",freed->size);
+            startHead->next=freed;
             freed->next=NULL;
-            freed->prior=curr;
-            curr->next=freed;
-            printf("Freed, occupied became LAST free.\n");
+            freed->prior= (struct Block *) startHead;
+            printf("Freed, occupied became first free. Memory was full.\n");
             return 0;
         }
-        if(curr->next != NULL && ((char*)curr < reference)){
+        if((char*)curr > reference){
             freed->size--; //set size even
-            printf("4)Freed size %d\n",freed->size);
-            freed->next=curr->next;
-            curr->next->prior=freed;
-            freed->prior=curr;
-            curr->next=freed;
-            printf("Freed, occupied is not last free.\n");
+            printf("Freed size %d\n",freed->size);
+            curr->prior=freed;
+            startHead->next=freed;
+            freed->next=curr;
+            freed->prior= (struct Block *) startHead;
+            printf("Freed, occupied became first free.\n");
             return 0;
+        }
+        if((char*)curr < reference){
+            while(curr->next != NULL && (char*)curr->next < reference){
+                curr=curr->next;
+            }
+            if(curr->next == NULL && ((char*)curr < reference)){
+                freed->size--; //set size even
+                printf("Freed size %d\n",freed->size);
+                freed->next=NULL;
+                freed->prior=curr;
+                curr->next=freed;
+                printf("Freed, occupied became LAST free.\n");
+                return 0;
+            }
+            if(curr->next != NULL && ((char*)curr < reference)){
+                freed->size--; //set size even
+                printf("4)Freed size %d\n",freed->size);
+                freed->next=curr->next;
+                curr->next->prior=freed;
+                freed->prior=curr;
+                curr->next=freed;
+                printf("Freed, occupied is not last free.\n");
+                return 0;
+            }
         }
     }
 }
@@ -214,15 +237,20 @@ int main(){
     int *pointer =(int*)memory_alloc(120);
     int *pointer1 =(int*)memory_alloc(120);
     int *pointer2 =(int*)memory_alloc(120);
+    int *pointer3 =(int*)memory_alloc(608);
     char *temp = (char *)pointer;
     temp = temp - sizeof(int);
     struct Block *read = (struct Block*) temp;
     if(pointer != NULL) printf("Read occupied %d\n",((struct Block*) temp)->size);
     if(((struct Block*) allpointer)->next != NULL)printf("First free size %d\n",((struct Block*) allpointer)->next->size);
     else printf("Out of memory\n");
+    memory_check((void*)((struct Block*) allpointer)->next);
     memory_free((void*)pointer);
+    memory_check((void*)((struct Block*) allpointer)->next); //this should be invalid
     if(((struct Block*) allpointer)->next != NULL)printf("First free size %d\n",((struct Block*) allpointer)->next->size);
+    memory_check((void*)pointer2);
     memory_free((void*)pointer2);
+    memory_free((void*)pointer3);
     checkFree();
     return 0;
 }

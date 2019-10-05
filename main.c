@@ -169,7 +169,7 @@ int memory_free(void *valid_ptr){
         printf("Freed, occupied became first free.\n");
         return 0;
     }
-    else{
+    if((char*)curr < reference){
         while(curr->next != NULL && (char*)curr->next < reference){
             curr=curr->next;
         }
@@ -182,7 +182,27 @@ int memory_free(void *valid_ptr){
             printf("Freed, occupied became LAST free.\n");
             return 0;
         }
+        if(curr->next != NULL && ((char*)curr < reference)){
+            freed->size--; //set size even
+            printf("4)Freed size %d\n",freed->size);
+            freed->next=curr->next;
+            curr->next->prior=freed;
+            freed->prior=curr;
+            curr->next=freed;
+            printf("Freed, occupied is not last free.\n");
+            return 0;
+        }
     }
+}
+void checkFree(){
+    struct arrayHead *startHead = (struct arrayHead*)allpointer;
+    struct Block *curr = startHead->next;
+    while(curr != NULL && curr->next != NULL){
+        printf("Curr size %d\n",curr->size);
+        curr=curr->next;
+    }
+    if(curr != NULL && curr->next == NULL)
+        printf("LAST free size %d\n",curr->size);
 }
 int main(){
     //Pamat = *(aka*)ptr;
@@ -192,6 +212,8 @@ int main(){
     memory_init(region,BYTECOUNT);
     printf("First free size %d\n",((struct Block*) allpointer)->next->size);
     int *pointer =(int*)memory_alloc(120);
+    int *pointer1 =(int*)memory_alloc(120);
+    int *pointer2 =(int*)memory_alloc(120);
     char *temp = (char *)pointer;
     temp = temp - sizeof(int);
     struct Block *read = (struct Block*) temp;
@@ -199,6 +221,8 @@ int main(){
     if(((struct Block*) allpointer)->next != NULL)printf("First free size %d\n",((struct Block*) allpointer)->next->size);
     else printf("Out of memory\n");
     memory_free((void*)pointer);
-    if(((struct Block*) allpointer)->next != NULL)printf("First free size %d second free size %d\n",((struct Block*) allpointer)->next->size, ((struct Block*) allpointer)->next->next->size);
+    if(((struct Block*) allpointer)->next != NULL)printf("First free size %d\n",((struct Block*) allpointer)->next->size);
+    memory_free((void*)pointer2);
+    checkFree();
     return 0;
 }

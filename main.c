@@ -42,7 +42,7 @@ int memory_check(void *ptr){
     if(((struct arrayHead*)allpointer)->next != NULL) {
         struct Block *curr=((struct arrayHead*)allpointer)->next;
         struct Block *check;
-        while(curr != NULL && curr->next != NULL){
+        while(curr->next != NULL){
             check = (struct Block*)reference;
             if(check==curr){
                 valid=false;
@@ -235,13 +235,28 @@ int main(){
     printf("given %p\n",region);
     memory_init(region,BYTECOUNT);
     printf("First free size %d\n",((struct Block*) allpointer)->next->size);
-    int *pointer =(int*)memory_alloc(120);
-    int *pointer1 =(int*)memory_alloc(120);
-    int *pointer2 =(int*)memory_alloc(120);
-    int *pointer3 =(int*)memory_alloc(600);
+    int *pointer =(int*)memory_alloc(100);
+    int *pointer1 =(int*)memory_alloc(100);
     memory_free(pointer);
-    memory_check(pointer3);
+    int *pointer2 =(int*)memory_alloc(100);
+    int *pointer3 =(int*)memory_alloc(100);
+    memory_free(pointer1);
+    checkFree();
+    int *pointer4 =(int*)memory_alloc(100);
+    int *pointer5 =(int*)memory_alloc(100);
+    int *pointer6 =(int*)memory_alloc(100);
+    memory_free(pointer4);
+    memory_free(pointer3);
+    int *pointer7 =(int*)memory_alloc(40);
+    int *pointer8 =(int*)memory_alloc(60);
+    int *pointer9 =(int*)memory_alloc(300);
+    memory_free(pointer5);
+    int *pointer10 =(int*)memory_alloc(12);
+    int *pointer11 =(int*)memory_alloc(6);
+    memory_check(pointer7);
+    memory_check((void*)((struct arrayHead*)allpointer)->next->next);
     memory_free(pointer2);
+    int *pointer12 =(int*)memory_alloc(154);
     checkFree();
     return 0;
 }

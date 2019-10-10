@@ -222,22 +222,34 @@ void checkFree(){
     struct arrayHead *startHead = (struct arrayHead*)allpointer;
     struct Block *curr = startHead->next;
     while(curr != NULL && curr->next != NULL){
-        //printf("Curr size %d\n",curr->size);
+        printf("Curr size %d\n",curr->size);
         curr=curr->next;
     }
-    /*if(curr != NULL && curr->next == NULL)
-        printf("LAST free size %d\n",curr->size);*/
+    if(curr != NULL && curr->next == NULL)
+        printf("LAST free size %d\n",curr->size);
 }
 
 // Vlastna funkcia main() je pre vase osobne testovanie. Dolezite: pri testovacich scenaroch sa nebude spustat!
-int main()
-{
-    char region[50];
-    memory_init(region, 50);
-    char* pointer = (char*) memory_alloc(10);
-    if (pointer)
-        memset(pointer, 0, 10);
-    if (pointer)
-        memory_free(pointer);
+int main(){
+    //Pamat = *(aka*)ptr;
+    char region[1000];
+    printf("Sizeof arrayHead %ld Sizeof Block %ld\n",sizeof(struct arrayHead),BLOCKSIZE);
+    memory_init(region,1000);
+    printf("given %p %p %p\n",region, &region[999],(allpointer + ((struct arrayHead *)allpointer)->size+ sizeof(struct arrayHead) + sizeof(int)-1));
+    printf("First free size %d\n",((struct Block*) allpointer)->next->size);
+    int *pointer =(int*)memory_alloc(200);
+    int *pointer1 =(int*)memory_alloc(200);
+    int *pointer2 =(int*)memory_alloc(200);
+    int *pointer3 =(int*)memory_alloc(200);
+    int *pointer4 =(int*)memory_alloc(150);
+    memory_free(pointer);
+    memory_free(pointer1);
+    memory_free(pointer2);
+    memory_free(pointer3);
+    memory_free(pointer4);
+    checkFree();
+    int *pointer5 =(int*)memory_alloc(150);
+    pointer2=(int*)memory_alloc(824);
+    checkFree();
     return 0;
 }
